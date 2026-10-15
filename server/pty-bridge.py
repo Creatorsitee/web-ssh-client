@@ -35,7 +35,7 @@ def main():
     env["USER"] = "root"
     env["LOGNAME"] = "root"
     env["HOME"] = "/root" if os.path.exists("/root") else (os.environ.get("HOME") or "/")
-    env["PS1"] = r"\[\e]0;root@cmnty: \w\a\]\[\033[01;31m\]root\[\033[01;37m\]@\[\033[01;32m\]cmnty\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;33m\]#\[\033[00m\] "
+    env["PS1"] = "root@cmnty# "
 
     shell = os.environ.get("SHELL") or "/bin/bash"
     if not os.path.exists(shell):
@@ -46,7 +46,7 @@ def main():
         cwd = "/"
 
     proc = subprocess.Popen(
-        [shell, "-i"],
+        [shell],
         stdin=slave,
         stdout=slave,
         stderr=slave,
