@@ -1,3 +1,12 @@
+---
+title: WebSSH Pro
+emoji: 💻
+colorFrom: blue
+colorTo: gray
+sdk: docker
+pinned: false
+---
+
 # WebSSH Pro
 
 [![Preact](https://img.shields.io/badge/Preact-10.19-673AB8?style=flat-square&logo=preact&logoColor=white)](https://preactjs.com/)

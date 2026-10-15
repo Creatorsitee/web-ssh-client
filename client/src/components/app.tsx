@@ -96,6 +96,12 @@ const flowControl = {
 export class App extends Component<{}, AppState> {
     constructor() {
         super();
+        let savedState = {};
+        try {
+            const saved = localStorage.getItem('webssh_app_state');
+            if (saved) savedState = JSON.parse(saved);
+        } catch (e) {}
+
         this.state = {
             tabs: [],
             activeTabId: 'form',
@@ -110,7 +116,16 @@ export class App extends Component<{}, AppState> {
             waiter: false,
             localOs: 'debian',
             localVersion: '12',
+            ...savedState,
         };
+    }
+
+    private updateState(newState: Partial<AppState>, callback?: () => void) {
+        this.setState(newState as any, () => {
+            const { tabs, activeTabId } = this.state;
+            localStorage.setItem('webssh_app_state', JSON.stringify({ tabs, activeTabId }));
+            if (callback) callback();
+        });
     }
 
     componentDidMount() {
@@ -176,6 +191,41 @@ export class App extends Component<{}, AppState> {
 
         const password = passResult.value || '';
         await this.verifyAndConnect(parsed.hostname, parsed.port, parsed.username, password);
+    };
+
+    private handleExecuteCommand = async () => {
+        const { hostname, port, username, password, passphrase, privateKey, totp, status: command } = this.state;
+        if (!hostname || !username || !command) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Required Fields',
+                text: 'Please enter Hostname, Username, and Command.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        this.setState({ waiter: true, status: 'Executing...' });
+        try {
+            const resp = await fetch('/api/ssh-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hostname,
+                    port: port || '22',
+                    username,
+                    password,
+                    passphrase,
+                    privateKey,
+                    totp,
+                    command,
+                }),
+            });
+            const text = await resp.text();
+            this.setState({ waiter: false, status: text });
+        } catch (e: any) {
+            this.setState({ waiter: false, status: 'Error: ' + (e?.message || 'Unknown error') });
+        }
     };
 
     private parseSshCommand(input: string): { hostname: string; username: string; port: string; valid: boolean } {
@@ -408,7 +458,7 @@ export class App extends Component<{}, AppState> {
                 timerProgressBar: true,
             });
 
-            this.setState(prev => ({
+            this.updateState(prev => ({
                 tabs: [...prev.tabs, newTab],
                 activeTabId: newTabId,
                 password: '',
@@ -455,7 +505,7 @@ export class App extends Component<{}, AppState> {
                 timerProgressBar: true,
             });
 
-            this.setState(prev => ({
+            this.updateState(prev => ({
                 tabs: [...prev.tabs, newTab],
                 activeTabId: newTabId,
                 waiter: false,
@@ -484,7 +534,7 @@ export class App extends Component<{}, AppState> {
         if (activeTabId === tabId) {
             newActive = newTabs.length > 0 ? newTabs[newTabs.length - 1].id : 'form';
         }
-        this.setState({ tabs: newTabs, activeTabId: newActive });
+        this.updateState({ tabs: newTabs, activeTabId: newActive });
     }
 
     render() {
@@ -498,7 +548,7 @@ export class App extends Component<{}, AppState> {
                     <button
                         type="button"
                         class={`new-tab-btn ${activeTabId === 'form' ? 'active' : ''}`}
-                        onClick={() => this.setState({ activeTabId: 'form' })}
+                        onClick={() => this.updateState({ activeTabId: 'form' })}
                         title="Create New Connection"
                         aria-label="New Connection"
                     >
@@ -512,7 +562,7 @@ export class App extends Component<{}, AppState> {
                         <div
                             key={tab.id}
                             class={`terminal-tab ${activeTabId === tab.id ? 'active' : ''}`}
-                            onClick={() => this.setState({ activeTabId: tab.id })}
+                            onClick={() => this.updateState({ activeTabId: tab.id })}
                         >
                             <OsIcon os={tab.os} version={tab.version} size={15} />
                             <span>{tab.hostname === 'local' ? tab.title : `${tab.remoteHostname || tab.title}${tab.version ? ` (${tab.version})` : ''}`}</span>
@@ -600,11 +650,26 @@ export class App extends Component<{}, AppState> {
                                     </div>
                                 </div>
 
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="command">SSH Command (Command Mode)</label>
+                                        <input
+                                            class="form-control"
+                                            type="text"
+                                            id="command"
+                                            name="command"
+                                            placeholder="e.g. uname -a"
+                                            onInput={e => this.updateState({ status: (e.target as HTMLInputElement).value })}
+                                        />
+                                    </div>
+                                </div>
+
                                 <input type="hidden" id="term" name="term" value="xterm-256color" />
                                 <input type="hidden" name="_xsrf" value="csrf-token" />
 
                                 <div class="btn-group">
                                     <div class="btn-left">
+                                        <button type="button" class="btn btn-primary" onClick={this.handleExecuteCommand}>Execute Command</button>
                                         <button type="button" class="btn btn-quick" onClick={this.handleQuickConnect}>Quick Connect</button>
                                     </div>
                                     <div class="btn-right">

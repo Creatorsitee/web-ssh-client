@@ -35,7 +35,7 @@ def main():
     env["USER"] = "root"
     env["LOGNAME"] = "root"
     env["HOME"] = "/root" if os.path.exists("/root") else (os.environ.get("HOME") or "/")
-    env["PS1"] = "root@cmnty# "
+    env["PS1"] = ""
 
     shell = os.environ.get("SHELL") or "/bin/bash"
     if not os.path.exists(shell):
