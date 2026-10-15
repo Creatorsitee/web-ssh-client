@@ -1,0 +1,12 @@
+FROM ubuntu:24.04
+
+ARG TARGETARCH
+
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists
+COPY ./dist/${TARGETARCH}/ttyd /usr/bin/ttyd
+
+EXPOSE 7681
+WORKDIR /root
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["ttyd", "-W", "bash"]
