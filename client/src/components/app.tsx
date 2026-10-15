@@ -416,12 +416,12 @@ export class App extends Component<{}, AppState> {
                 totp: '',
                 privateKey: '',
             }));
-        } catch (e) {
+        } catch (e: any) {
             this.setState({ waiter: false });
             Swal.fire({
                 icon: 'error',
                 title: 'Connection Error',
-                text: 'Network error or unreachable host.',
+                text: e?.message || 'Network error or unreachable host. Please verify hostname, port, and network connection.',
                 confirmButtonText: 'OK',
             });
         }

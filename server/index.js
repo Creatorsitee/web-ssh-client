@@ -266,6 +266,75 @@ app.post('/api/ssh-test', (req, res) => {
   }
 });
 
+app.post('/api/ssh-stream', (req, res) => {
+  const { hostname, port = 22, username, password, passphrase, privateKey, totp, command } = req.body;
+  if (!hostname || !username) {
+    return res.status(400).json({ success: false, message: 'Hostname and Username are required' });
+  }
+
+  const { Client } = require('ssh2');
+  const conn = new Client();
+  let executed = false;
+
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Transfer-Encoding', 'chunked');
+
+  conn.on('ready', () => {
+    conn.exec(command || 'uname -a; whoami', (err, stream) => {
+      if (err || !stream) {
+        res.write(`Error executing command: ${err ? err.message : 'stream error'}\n`);
+        conn.end();
+        return res.end();
+      }
+      stream.on('data', (data) => {
+        res.write(data);
+      });
+      stream.stderr.on('data', (data) => {
+        res.write(data);
+      });
+      stream.on('close', () => {
+        conn.end();
+        res.end();
+      });
+    });
+  });
+
+  conn.on('error', (err) => {
+    if (!executed) {
+      executed = true;
+      res.write(`SSH Connection Error: ${err.message}\n`);
+      res.end();
+    }
+  });
+
+  conn.on('keyboard-interactive', (name, instructions, lang, prompts, finish) => {
+    const answers = prompts.map(prompt => {
+      const text = prompt.prompt.toLowerCase();
+      if (text.includes('password') || text.includes('verification') || text.includes('code') || text.includes('totp')) {
+        return totp ? (password || '') + totp : (password || '');
+      }
+      return password || '';
+    });
+    finish(answers);
+  });
+
+  try {
+    conn.connect({
+      host: hostname,
+      port: parseInt(port, 10) || 22,
+      username: username,
+      password: password || undefined,
+      passphrase: passphrase || undefined,
+      privateKey: privateKey || undefined,
+      tryKeyboard: true,
+      readyTimeout: 10000,
+    });
+  } catch (err) {
+    res.write(`Failed to connect: ${err.message}\n`);
+    res.end();
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
@@ -524,4 +593,8 @@ wss.on('connection', (ws, request) => {
   });
 });
 
-server.listen(PORT, HOST, () => {});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  server.listen(PORT, HOST, () => {});
+}
+
+module.exports = app;

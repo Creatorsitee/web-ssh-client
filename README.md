@@ -5,9 +5,7 @@
 [![Vite](https://img.shields.io/badge/Vite-5.3-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Express](https://img.shields.io/badge/Express-4.21-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![PTY](https://img.shields.io/badge/PTY-Python%203-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![SSH2](https://img.shields.io/badge/SSH-SSH2-232F3E?style=flat-square&logo=ssh&logoColor=white)](https://github.com/mscdex/ssh2)
-[![WebSocket](https://img.shields.io/badge/WebSocket-ws%208.18-010101?style=flat-square&logo=socketdotio&logoColor=white)](https://github.com/websockets/ws)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 [![Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)](https://railway.app/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
@@ -67,10 +65,11 @@ npm start
 
 ### Deployment
 
-Deployable to any container or Node.js hosting platform:
+Fully compatible with **Vercel**, Docker, Railway, and VPS:
 
-- Docker: build and run with the included `Dockerfile`
-- Railway / VPS / Cloud Container: binds to `0.0.0.0:$PORT` automatically
+- **Vercel**: Import your repository into Vercel and deploy instantly (configured via `vercel.json` with serverless API and routing).
+- **Docker**: Build and run with the included `Dockerfile`.
+- **Railway / VPS**: Binds to `0.0.0.0:$PORT` automatically.
 
 ## Security
 
